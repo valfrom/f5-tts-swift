@@ -253,7 +253,7 @@ public class F5TTS: Module {
         progressHandler: ((Double) -> Void)? = nil
     ) async throws -> MLXArray {
         print("Loading Vocos model...")
-        let vocos = try await Vocos.fromPretrained(repoId: "lucasnewman/vocos-mel-24khz-mlx")
+        let vocos = try await Vocos.fromPretrained(repoId: "lucasnewman/vocos-mel-24khz-mlx", verify: false)
 
         // load the reference audio + text
 
@@ -298,14 +298,14 @@ public class F5TTS: Module {
 // MARK: - Pretrained Models
 
 public extension F5TTS {
-    static func fromPretrained(repoId: String, downloadProgress: ((Progress) -> Void)? = nil) async throws -> F5TTS {
+    static func fromPretrained(repoId: String, downloadProgress: ((Progress) -> Void)? = nil, verify: Bool = true) async throws -> F5TTS {
         let modelDirectoryURL = try await Hub.snapshot(from: repoId, matching: ["*.safetensors", "*.txt"]) { progress in
             downloadProgress?(progress)
         }
-        return try self.fromPretrained(modelDirectoryURL: modelDirectoryURL)
+        return try self.fromPretrained(modelDirectoryURL: modelDirectoryURL, verify: verify)
     }
 
-    static func fromPretrained(modelDirectoryURL: URL) throws -> F5TTS {
+    static func fromPretrained(modelDirectoryURL: URL, verify: Bool = true) throws -> F5TTS {
         let modelURL = modelDirectoryURL.appendingPathComponent("model.safetensors")
         let modelWeights = try loadArrays(url: modelURL)
 
@@ -348,7 +348,7 @@ public extension F5TTS {
                 melSpec: MelSpec(filterbank: filterbank),
                 vocabCharMap: vocab
             )
-            try predictor.update(parameters: ModuleParameters.unflattened(durationModelWeights), verify: [.all])
+            try predictor.update(parameters: ModuleParameters.unflattened(durationModelWeights), verify: [verify ? .all : .none])
 
             durationPredictor = predictor
         } catch {
@@ -372,7 +372,7 @@ public extension F5TTS {
             vocabCharMap: vocab,
             durationPredictor: durationPredictor
         )
-        try f5tts.update(parameters: ModuleParameters.unflattened(modelWeights), verify: [.all])
+        try f5tts.update(parameters: ModuleParameters.unflattened(modelWeights), verify: [verify ? .all : .none])
 
         return f5tts
     }
