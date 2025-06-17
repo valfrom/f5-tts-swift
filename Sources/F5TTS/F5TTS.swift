@@ -250,10 +250,16 @@ public class F5TTS: Module {
         sway: Double = -1.0,
         speed: Double = 1.0,
         seed: Int? = nil,
-        progressHandler: ((Double) -> Void)? = nil
+        progressHandler: ((Double) -> Void)? = nil,
+        returnMel: Bool = false
     ) async throws -> MLXArray {
         print("Loading Vocos model...")
-        let vocos = try await Vocos.fromPretrained(repoId: "lucasnewman/vocos-mel-24khz-mlx", verify: false)
+        let vocos: Vocos?
+        if returnMel {
+            vocos = nil
+        } else {
+            vocos = try await Vocos.fromPretrained(repoId: "lucasnewman/vocos-mel-24khz-mlx", verify: false)
+        }
 
         // load the reference audio + text
 
@@ -275,9 +281,13 @@ public class F5TTS: Module {
 
         let normalizedAudio = F5TTS.normalizeAudio(audio: audio)
         let processedText = referenceText + " " + text
+        
+        var cond = normalizedAudio.expandedDimensions(axis: 0)
+        cond = cond.reshaped([cond.shape[1]])
+        cond = self.melSpec(x: cond)
 
         let (outputAudio, _) = try self.sample(
-            cond: normalizedAudio.expandedDimensions(axis: 0),
+            cond: cond,
             text: [processedText],
             duration: nil,
             steps: steps,
@@ -285,10 +295,14 @@ public class F5TTS: Module {
             cfgStrength: cfg,
             swayCoef: sway,
             seed: seed,
-            vocoder: vocos.decode
+            vocoder: vocos?.decode
         ) { progress in
             print("Generation progress: \(progress)")
             progressHandler?(progress)
+        }
+        
+        if returnMel {
+            return outputAudio[cond.shape[0]...]
         }
 
         return outputAudio[audio.shape[0]...]
