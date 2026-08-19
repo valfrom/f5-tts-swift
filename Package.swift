@@ -5,7 +5,7 @@ import PackageDescription
 
 let package = Package(
     name: "f5-tts-swift",
-    platforms: [.macOS(.v14), .iOS(.v16)],
+    platforms: [.macOS(.v14), .iOS(.v17)],
     products: [
         .library(
             name: "F5TTS",
