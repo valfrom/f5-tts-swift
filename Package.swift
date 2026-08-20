@@ -13,7 +13,7 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/valfrom/mlx-swift.git", branch: "ios16-compat"),
+        .package(url: "https://github.com/valfrom/mlx-swift.git", revision: "1257e7fd89cf4357a4cea7558ffe97c3001f13de"),
         .package(url: "https://github.com/huggingface/swift-transformers", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.3.0"),
         .package(url: "https://github.com/valfrom/vocos-swift.git", branch: "ios16-compat")
